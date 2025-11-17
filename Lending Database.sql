@@ -121,7 +121,16 @@ INSERT INTO PAYMENT_SCHEDULE(scheduleID, loanID, dueDate, amountDue)
 VALUES('SE001', 'LN001', '2025-09-01', '1716.67'),
       ('SE002', 'LN001', '2025-10-01', '1716.67'),
       ('SE003', 'LN001', '2025-11-01', '1716.67');
-   
+
+-- FOR KIER BORNE (schedule)
+INSERT INTO PAYMENT_SCHEDULE(scheduleID, loanID, dueDate, amountDue)
+VALUES('SE010', 'LN002', '2025-11-01', '2500.00'),
+      ('SE011', 'LN002', '2025-12-01', '2500.00'),
+      ('SE012', 'LN002', '2026-01-01', '2500.00'),
+      ('SE013', 'LN002', '2026-02-01', '2500.00'),
+      ('SE014', 'LN002', '2026-03-01', '2500.00'),
+      ('SE015', 'LN002', '2026-04-01', '2500.00');
+
    -- FOR BEA ANGELA BALUCAN(schedule)
 INSERT INTO PAYMENT_SCHEDULE(scheduleID, loanID, dueDate, amountDue)
 VALUES('SE004', 'LN003', '2025-11-01', '3573.33'),
@@ -131,15 +140,29 @@ VALUES('SE004', 'LN003', '2025-11-01', '3573.33'),
       ('SE008', 'LN003', '2026-03-01', '3573.33'),
       ('SE009', 'LN003', '2026-04-01', '3573.33');
       
-      -- NEOKENT DURANDO (payment)
+      -- NEOKENT DURANO (payment)
 INSERT INTO PAYMENT(paymentID, scheduleID, paymentDate, amountPaid, paymentMethod)
 VALUEs('PT001', 'SE001', '2025-09-01', '1716.67', 'CASH'),
 	  ('PT002', 'SE001', '2025-10-01', '1716.67', 'CASH'),
       ('PT003', 'SE001', '2025-11-01', '1716.67', 'CASH');
-      
-      -- FOR BEA BALUCAN (payment)
+
+-- FOR BEA ANGELA BALUCAN (payment)
 INSERT INTO PAYMENT(paymentID, scheduleID, paymentDate, amountPaid, paymentMethod)
-VALUEs('PT004', 'SE001', '2025-11-01', '1716.67', 'CASH');
+VALUES('PT004', 'SE004', '2025-11-01', '3573.33', 'CASH'),
+      ('PT005', 'SE005', '2025-12-01', '3573.33', 'CASH'),
+      ('PT006', 'SE006', '2026-01-01', '3573.33', 'CASH'),
+      ('PT007', 'SE007', '2026-02-01', '3573.33', 'CASH'),
+      ('PT008', 'SE008', '2026-03-01', '3573.33', 'CASH'),
+      ('PT009', 'SE009', '2026-04-01', '3573.33', 'CASH');
+
+-- FOR KIER BORNE (payment)
+INSERT INTO PAYMENT(paymentID, scheduleID, paymentDate, amountPaid, paymentMethod)
+VALUES('PT010', 'SE010', '2025-11-01', '2500.00', 'CASH'),
+      ('PT011', 'SE011', '2025-12-01', '2500.00', 'CASH'),
+      ('PT012', 'SE012', '2026-01-01', '2500.00', 'CASH'),
+      ('PT013', 'SE013', '2026-02-01', '2500.00', 'CASH'),
+      ('PT014', 'SE014', '2026-03-01', '2500.00', 'CASH'),
+      ('PT015', 'SE015', '2026-04-01', '2500.00', 'CASH');
 
 INSERT INTO PENALTY_RATE (penaltyRateID, numOfDays, rate)
 VALUES('PR001', '1-3', 0.01),   -- 1% penalty for payments 1–3 days late
