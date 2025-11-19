@@ -63,6 +63,36 @@ CREATE TABLE PAYMENT_SCHEDULE
      FOREIGN KEY (loanID) REFERENCES APPROVED_LOAN (loanID)
      ON DELETE CASCADE ON UPDATE CASCADE
     );
+
+DELIMITER $$
+
+CREATE TRIGGER trg_calc_amountDue
+BEFORE INSERT ON PAYMENT_SCHEDULE
+FOR EACH ROW
+BEGIN
+    DECLARE termMonths INT;
+    DECLARE loanAmount DECIMAL(10,2);
+    DECLARE rate DECIMAL(5,3);
+
+    -- Get loan data from APPROVED_LOAN
+    SELECT 
+        amount, 
+        interestRate,
+        SUBSTRING(paymentTerm, 1, 2)  -- "3 MONTHS" → 3
+    INTO 
+        loanAmount,
+        rate,
+        termMonths
+    FROM APPROVED_LOAN
+    WHERE loanID = NEW.loanID;
+
+    -- Compute monthly due
+    SET NEW.amountDue = (loanAmount * (1 + rate)) / termMonths;
+
+END$$
+
+DELIMITER ;
+
     
 CREATE TABLE PAYMENT
 	(paymentID CHAR(5) PRIMARY KEY,
@@ -73,7 +103,25 @@ CREATE TABLE PAYMENT
      FOREIGN KEY (scheduleID) REFERENCES PAYMENT_SCHEDULE (scheduleID)
      ON DELETE CASCADE ON UPDATE CASCADE
     );
-    
+
+DELIMITER $$
+
+CREATE TRIGGER trg_fill_amountPaid
+BEFORE INSERT ON PAYMENT
+FOR EACH ROW
+BEGIN
+    DECLARE dueAmount DECIMAL(10,2);
+
+    SELECT amountDue 
+    INTO dueAmount
+    FROM PAYMENT_SCHEDULE
+    WHERE scheduleID = NEW.scheduleID;
+
+    SET NEW.amountPaid = dueAmount;
+END$$
+
+DELIMITER ;
+
  CREATE TABLE PENALTY
 	(penaltyID CHAR(5) PRIMARY KEY,
      paymentID CHAR(5),
@@ -81,7 +129,50 @@ CREATE TABLE PAYMENT
      FOREIGN KEY (paymentID) REFERENCES PAYMENT (paymentID)
      ON DELETE CASCADE ON UPDATE CASCADE
     );
-    
+
+DELIMITER $$
+
+CREATE TRIGGER trg_calc_penaltyFee
+BEFORE INSERT ON PENALTY
+FOR EACH ROW
+BEGIN
+    DECLARE due DATE;
+    DECLARE pay DATE;
+    DECLARE daysLate INT;
+    DECLARE rate DECIMAL(5,2);
+    DECLARE amountDue DECIMAL(10,2);
+
+    -- Get dueDate and paymentDate
+    SELECT PS.dueDate, P.paymentDate, PS.amountDue
+    INTO due, pay, amountDue
+    FROM PAYMENT P
+    JOIN PAYMENT_SCHEDULE PS ON P.scheduleID = PS.scheduleID
+    WHERE P.paymentID = NEW.paymentID;
+
+    -- Compute late days
+    SET daysLate = DATEDIFF(pay, due);
+
+    IF daysLate < 1 THEN
+        SET NEW.penaltyFee = 0;
+    ELSE
+        -- Get proper rate from penalty_rate table
+        SELECT rate 
+        INTO rate
+        FROM PENALTY_RATE
+        WHERE daysLate BETWEEN 
+            CAST(SUBSTRING_INDEX(numOfDays, '-', 1) AS UNSIGNED)
+            AND
+            CAST(SUBSTRING_INDEX(numOfDays, '-', -1) AS UNSIGNED)
+        LIMIT 1;
+
+        SET NEW.penaltyFee = amountDue * rate;
+    END IF;
+
+END$$
+
+DELIMITER ;
+
+
 CREATE TABLE PENALTY_RATE
 	(penaltyRateID CHAR(5) PRIMARY KEY,
      numOfDays VARCHAR(10) NOT NULL,
@@ -115,36 +206,36 @@ VALUES('BH001', 'COLON BRANCH', '09623657688', 'COLON CEBU CITY CEBU'),
 	  ('BH003', 'CARCAR BRANCH', '09712657691', 'CARCAR CITY CEBU');
       
    -- FOR NEOKENT DURANO(schedule)
-INSERT INTO PAYMENT_SCHEDULE(scheduleID, loanID, dueDate, amountDue)
-VALUES('SE001', 'LN001', '2025-09-01', ''),
-      ('SE002', 'LN001', '2025-10-01', ''),
-      ('SE003', 'LN001', '2025-11-01', '');
+INSERT INTO PAYMENT_SCHEDULE(scheduleID, loanID, dueDate)
+VALUES('SE001', 'LN001', '2025-09-01'),
+      ('SE002', 'LN001', '2025-10-01'),
+      ('SE003', 'LN001', '2025-11-01');
 
    -- FOR BEA ANGELA BALUCAN(schedule)
-INSERT INTO PAYMENT_SCHEDULE(scheduleID, loanID, dueDate, amountDue)
-VALUES('SE004', 'LN003', '2025-11-01', ''),
-	  ('SE005', 'LN003', '2025-12-01', ''),
-      ('SE006', 'LN003', '2026-01-01', ''),
-      ('SE007', 'LN003', '2026-02-01', ''),
-      ('SE008', 'LN003', '2026-03-01', ''),
-      ('SE009', 'LN003', '2026-04-01', '');
+INSERT INTO PAYMENT_SCHEDULE(scheduleID, loanID, dueDate)
+VALUES('SE004', 'LN003', '2025-11-01'),
+	  ('SE005', 'LN003', '2025-12-01'),
+      ('SE006', 'LN003', '2026-01-01'),
+      ('SE007', 'LN003', '2026-02-01'),
+      ('SE008', 'LN003', '2026-03-01'),
+      ('SE009', 'LN003', '2026-04-01');
       
       -- NEO KENT DURANO (payment)
-INSERT INTO PAYMENT(paymentID, scheduleID, paymentDate, amountPaid, paymentMethod)
-VALUEs('PT001', 'SE001', '2025-09-01', '', 'CASH'),
-	  ('PT002', 'SE002', '2025-10-01', '', 'CASH'),
-      ('PT003', 'SE003', '2025-11-01', '', 'CASH');
+INSERT INTO PAYMENT(paymentID, scheduleID, paymentDate, paymentMethod)
+VALUEs('PT001', 'SE001', '2025-09-01', 'CASH'),
+	  ('PT002', 'SE002', '2025-10-01', 'CASH'),
+      ('PT003', 'SE003', '2025-11-01', 'CASH');
 
 -- FOR BEA ANGELA BALUCAN (payment)
-INSERT INTO PAYMENT(paymentID, scheduleID, paymentDate, amountPaid, paymentMethod)
-VALUES('PT004', 'SE004', '2025-11-01', '', 'CASH'),
-      ('PT005', 'SE005', '2025-12-08', '', 'BPI-BANK'),
-      ('PT006', 'SE006', '2026-01-16', '', 'BPI-BANK'),
+INSERT INTO PAYMENT(paymentID, scheduleID, paymentDate, paymentMethod)
+VALUES('PT004', 'SE004', '2025-11-01', 'CASH'),
+      ('PT005', 'SE005', '2025-12-08', 'BPI-BANK'),
+      ('PT006', 'SE006', '2026-01-16', 'BPI-BANK'),
     
 
-INSERT INTO PENALTY (penaltyID, paymentID, penaltyFee)
-VALUES('PY001', 'PT005', 71.47)
-      ('PY002', 'PT006', 178.67);
+INSERT INTO PENALTY (penaltyID, paymentID)
+VALUES('PY001', 'PT005')
+      ('PY002', 'PT006');
 	
 
 INSERT INTO PENALTY_RATE (penaltyRateID, numOfDays, rate)
