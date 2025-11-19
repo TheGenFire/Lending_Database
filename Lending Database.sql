@@ -108,7 +108,7 @@ VALUES('LN001', 'BR001', 'SF001', '5000', '3 MONTHS', '0.01', '2025-08-01', '202
       
 INSERT INTO STAFF (staffID, branchID, firstName, lastName, phone, position)
 VALUES('SF001', 'BH001', 'ANNIE', 'MAMITAG', '09345123381', 'LOAN OFFICER'),
-	  ('SF002', 'BH001', 'NJ', 'ARNADO', '09345127381', 'LOAN OFFICER'),
+	  ('SF002', 'BH001', 'NJ', 'ARNADO', '09448103254', 'LOAN OFFICER'),
       ('SF003', 'BH003', 'STEPHEN', 'ALEDON', '09551288174', 'LOAN OFFICER');
       
 INSERT INTO BRANCH (branchID, branchName, phone, address)
@@ -134,24 +134,26 @@ VALUES('SE004', 'LN003', '2025-11-01', '3573.33'),
       -- NEO KENT DURANO (payment)
 INSERT INTO PAYMENT(paymentID, scheduleID, paymentDate, amountPaid, paymentMethod)
 VALUEs('PT001', 'SE001', '2025-09-01', '1716.67', 'CASH'),
-	  ('PT002', 'SE001', '2025-10-01', '1716.67', 'CASH'),
-      ('PT003', 'SE001', '2025-11-01', '1716.67', 'CASH');
+	  ('PT002', 'SE002', '2025-10-01', '1716.67', 'CASH'),
+      ('PT003', 'SE003', '2025-11-01', '1716.67', 'CASH');
 
 -- FOR BEA ANGELA BALUCAN (payment)
 INSERT INTO PAYMENT(paymentID, scheduleID, paymentDate, amountPaid, paymentMethod)
 VALUES('PT004', 'SE004', '2025-11-01', '3573.33', 'CASH'),
-      ('PT005', 'SE005', '2025-12-01', '3573.33', 'CASH'),
-      ('PT006', 'SE006', '2026-01-01', '3573.33', 'CASH'),
-      ('PT007', 'SE007', '2026-02-01', '3573.33', 'CASH'),
-      ('PT008', 'SE008', '2026-03-01', '3573.33', 'CASH'),
-      ('PT009', 'SE009', '2026-04-01', '3573.33', 'CASH');
+      ('PT005', 'SE005', '2025-12-08', '3644.80', 'BPI-BANK'),
+      ('PT006', 'SE006', '2026-01-16', '3752.00', 'BPI-BANK'),
+    
 
+INSERT INTO PENALTY (penaltyID, paymentID, penaltyFee)
+VALUES('PY001', 'PT005', 71.47)
+      ('PY002', 'PT006', 178.67);
+	
 
 INSERT INTO PENALTY_RATE (penaltyRateID, numOfDays, rate)
-VALUES('PR001', '1-3', 0.01),   -- 1% penalty for payments 1–3 days late
-	  ('PR002', '4-7', 0.02),   -- 2% penalty for 4–7 days late
-      ('PR003', '8-15', 0.03),  -- 3% penalty for 8–15 days late
-      ('PR004', '15+', 0.05);  -- 5% penalty for more than 15 days late
+VALUES('PR001', '1-14', 0.02),   -- 2% penalty for payments 1–14 days late
+	  ('PR002', '15-21', 0.05),   -- 5% penalty for 15-21 days late
+      ('PR003', '21 above', 0.10),  -- 10% penalty for more than 21 days late
+     
 
 SELECT borrowerID "BORROWER ID", firstName "FIRST NAME", lastName "LAST NAME", phone "PHONE NUMBER", address "ADDRESS" FROM BORROWER;
 SELECT loanID "LOAN ID", amount "AMOUNT", status "STATUS", borrowerID "BORROWER ID", staffID "STAFF ID" FROM LOAN_APPLICATION;
