@@ -150,40 +150,124 @@ VALUES('PY001', 'PT005', NULL),
 INSERT INTO PENALTY_RATE (penaltyRateID, numOfDays, rate)
 VALUES('PR001', '1-14', 0.02),   -- 2% penalty for payments 1–14 days late
 	  ('PR002', '15-21', 0.05),   -- 5% penalty for 15-21 days late
-      ('PR003', '21 above', 0.10),  -- 10% penalty for more than 21 days late
+      ('PR003', '21 above', 0.10);  -- 10% penalty for more than 21 days late
+ 
+-- Added stored function and procedure for amountDue in PAYMENT_Schedule Table
+DELIMITER $$
 
 CREATE FUNCTION compute_amountDue(p_loanID CHAR(5))
 RETURNS DECIMAL(10,2)
+DETERMINISTIC
+READS SQL DATA
 BEGIN
-    DECLARE total DECIMAL(10,2);
+    DECLARE principal DECIMAL(10,2);
     DECLARE months INT;
+    DECLARE interestRate DECIMAL(5,4);
     DECLARE monthly DECIMAL(10,2);
 
-    SELECT amount INTO total FROM approved_loan WHERE loanID = p_loanID;
+    -- Get loan amount
+    SELECT amount INTO principal
+    FROM approved_loan 
+    WHERE loanID = p_loanID;
 
+    -- Determine payment term in months
     SELECT 
         CASE 
             WHEN paymentTerm = '3 MONTHS' THEN 3
             WHEN paymentTerm = '6 MONTHS' THEN 6
+            WHEN paymentTerm = '12 MONTHS' THEN 12
+            ELSE 1
         END
     INTO months
     FROM approved_loan
     WHERE loanID = p_loanID;
 
-    SET monthly = total / months;
+    -- Determine interest rate based on loan amount and term
+    IF months = 3 AND principal BETWEEN 5000 AND 10000 THEN
+        SET interestRate = 0.01;  -- 1%
+    ELSEIF months = 6 AND principal BETWEEN 11000 AND 30000 THEN
+        SET interestRate = 0.012; -- 1.2%
+    ELSEIF months = 12 AND principal > 30000 THEN
+        SET interestRate = 0.015; -- 1.5%
+    ELSE
+        SET interestRate = 0; -- default if no match
+    END IF;
+
+    -- Compute monthly payment including interest
+    SET monthly = (principal + (principal * interestRate)) / months;
 
     RETURN monthly;
-END;
+END$$
 
+DELIMITER ;
+
+
+DELIMITER $$
 CREATE PROCEDURE fill_amountDue()
 BEGIN
     UPDATE payment_schedule s
-    SET s.amountDue = compute_amount_due(s.loanID)
+    SET s.amountDue = compute_amountDue(s.loanID)
     WHERE s.amountDue IS NULL;
-END;
+END$$;
 
-CALL fill_amount_due();
+DELIMITER ;
 
+UPDATE payment_schedule
+SET amountDue = NULL;
+
+
+CALL fill_amountDue();
+
+-- Added stored function and procedure for penaltyFee in Penalty Table
+
+DELIMITER $$
+
+CREATE FUNCTION compute_penalty(p_paymentID CHAR(5))
+RETURNS DECIMAL(10,2)
+DETERMINISTIC
+READS SQL DATA
+BEGIN
+    DECLARE due DATE;
+    DECLARE paid DATE;
+    DECLARE baseAmount DECIMAL(10,2);
+    DECLARE daysLate INT;
+    DECLARE rate DECIMAL(5,2);
+
+    SELECT s.dueDate, p.paymentDate, s.amountDue
+    INTO due, paid, baseAmount
+    FROM payment p
+    JOIN payment_schedule s ON p.scheduleID = s.scheduleID
+    WHERE p.paymentID = p_paymentID;
+
+    SET daysLate = DATEDIFF(paid, due);
+
+    IF daysLate BETWEEN 1 AND 14 THEN
+        SET rate = 0.02;
+    ELSEIF daysLate BETWEEN 15 AND 21 THEN
+        SET rate = 0.05;
+    ELSEIF daysLate > 21 THEN
+        SET rate = 0.10;
+    ELSE
+        SET rate = 0;
+    END IF;
+
+    RETURN baseAmount * rate;
+END$$;
+
+DELIMITER ;
+
+DELIMITER $$
+
+CREATE PROCEDURE fill_penaltyFee()
+BEGIN
+    UPDATE penalty p
+    SET p.penaltyFee = compute_penalty(p.paymentID)
+    WHERE p.penaltyFee IS NULL;
+END$$;
+
+DELIMITER ;
+
+CALL fill_penaltyFee();
      
 
 SELECT borrowerID "BORROWER ID", firstName "FIRST NAME", lastName "LAST NAME", phone "PHONE NUMBER", address "ADDRESS" FROM BORROWER;
@@ -195,7 +279,6 @@ SELECT scheduleID "SCHEDULE ID", loanID "LOAN ID", dueDate "DUE DATE", amountDue
 SELECT paymentID "PAYMENT ID", scheduleID "SCHEDULE ID", paymentDate "PAYMENT DATE", amountPaid "AMOUNT", paymentMethod "PAYMENT METHOD" FROM PAYMENT;
 SELECT penaltyID "PENALTY ID", paymentID "PAYMENT ID", penaltyFee "PENALTY FEE" FROM PENALTY;
 SELECT penaltyRateID "PENALTY RATE ID", numOfDays "NUMBER OF LATE DAYS", rate "PENALTY RATE" FROM PENALTY_RATE;
-
 
 
 
