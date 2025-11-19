@@ -24,7 +24,6 @@ CREATE TABLE LOAN_APPLICATION
 
 CREATE TABLE APPROVED_LOAN
 	(loanID CHAR(5) PRIMARY KEY,
-     borrowerID CHAR(5),
      staffID CHAR(5),
 	 amount DECIMAL(10,2) NOT NULL,
      paymentTerm VARCHAR(10) NOT NULL,
@@ -33,8 +32,6 @@ CREATE TABLE APPROVED_LOAN
      maturityDate DATE NOT NULL,
 	 status VARCHAR(15) NOT NULL,
      FOREIGN KEY(loanID) REFERENCES LOAN_APPLICATION (loanID)
-     ON DELETE RESTRICT ON UPDATE CASCADE,
-	 FOREIGN KEY (borrowerID) REFERENCES BORROWER (borrowerID)
      ON DELETE RESTRICT ON UPDATE CASCADE,
 	 FOREIGN KEY (staffID) REFERENCES STAFF (staffID)
      ON DELETE RESTRICT ON UPDATE CASCADE
@@ -98,18 +95,19 @@ VALUES ('BR001','NEOKENT', 'DURANO', '09123456789', 'DANAO CITY'),
        
 INSERT INTO LOAN_APPLICATION (loanID, amount, status, borrowerID, staffID)
 VALUES('LN001', '5000', 'APPROVED', 'BR001', 'SF001'),
-	  ('LN002', '15000', 'APPROVED', 'BR001', 'SF002'),
-	  ('LN003', '20000', 'APPROVED', 'BR001', 'SF001');
+	  ('LN002', '15000', 'APPROVED', 'BR002', 'SF002'),
+	  ('LN003', '20000', 'APPROVED', 'BR003', 'SF001'),
+	  ('LN004', '50000', 'DENIED', 'BR001','SF001');
       
-INSERT INTO APPROVED_LOAN (loanID, borrowerID, staffID, amount, paymentTerm, interestRate, startDate, maturityDate, status)
-VALUES('LN001', 'BR001', 'SF001', '5000', '3 MONTHS', '0.01', '2025-08-01', '2025-11-01','PAID'),
-	  ('LN002', 'BR002', 'SF002', '15000', '6 MONTHS', '0.012', '2025-11-01', '2026-05-01','PENDING'),
-      ('LN003', 'BR003', 'SF001', '20000', '6 MONTHS', '0.012', '2025-10-01', '2026-04-01','ACTIVE');
+INSERT INTO APPROVED_LOAN (loanID, staffID, amount, paymentTerm, interestRate, startDate, maturityDate, status)
+VALUES('LN001', 'SF001', '5000', '3 MONTHS', '0.01', '2025-08-01', '2025-11-01','PAID'),
+	  ('LN002', 'SF002', '15000', '6 MONTHS', '0.012', '2025-11-01', '2026-05-01','PENDING'),
+      ('LN003', 'SF001', '20000', '6 MONTHS', '0.012', '2025-10-01', '2026-04-01','ACTIVE');
       
 INSERT INTO STAFF (staffID, branchID, firstName, lastName, phone, position)
 VALUES('SF001', 'BH001', 'ANNIE', 'MAMITAG', '09345123381', 'LOAN OFFICER'),
 	  ('SF002', 'BH001', 'NJ', 'ARNADO', '09448103254', 'LOAN OFFICER'),
-      ('SF003', 'BH003', 'STEPHEN', 'ALEDON', '09551288174', 'LOAN OFFICER');
+      ('SF003', 'BH002', 'STEPHEN', 'ALEDON', '09551288174', 'LOAN OFFICER');
       
 INSERT INTO BRANCH (branchID, branchName, phone, address)
 VALUES('BH001', 'COLON BRANCH', '09623657688', 'COLON CEBU CITY CEBU'),
@@ -118,30 +116,30 @@ VALUES('BH001', 'COLON BRANCH', '09623657688', 'COLON CEBU CITY CEBU'),
       
    -- FOR NEOKENT DURANO(schedule)
 INSERT INTO PAYMENT_SCHEDULE(scheduleID, loanID, dueDate, amountDue)
-VALUES('SE001', 'LN001', '2025-09-01', '1716.67'),
-      ('SE002', 'LN001', '2025-10-01', '1716.67'),
-      ('SE003', 'LN001', '2025-11-01', '1716.67');
+VALUES('SE001', 'LN001', '2025-09-01', ''),
+      ('SE002', 'LN001', '2025-10-01', ''),
+      ('SE003', 'LN001', '2025-11-01', '');
 
    -- FOR BEA ANGELA BALUCAN(schedule)
 INSERT INTO PAYMENT_SCHEDULE(scheduleID, loanID, dueDate, amountDue)
-VALUES('SE004', 'LN003', '2025-11-01', '3573.33'),
-	  ('SE005', 'LN003', '2025-12-01', '3573.33'),
-      ('SE006', 'LN003', '2026-01-01', '3573.33'),
-      ('SE007', 'LN003', '2026-02-01', '3573.33'),
-      ('SE008', 'LN003', '2026-03-01', '3573.33'),
-      ('SE009', 'LN003', '2026-04-01', '3573.33');
+VALUES('SE004', 'LN003', '2025-11-01', ''),
+	  ('SE005', 'LN003', '2025-12-01', ''),
+      ('SE006', 'LN003', '2026-01-01', ''),
+      ('SE007', 'LN003', '2026-02-01', ''),
+      ('SE008', 'LN003', '2026-03-01', ''),
+      ('SE009', 'LN003', '2026-04-01', '');
       
       -- NEO KENT DURANO (payment)
 INSERT INTO PAYMENT(paymentID, scheduleID, paymentDate, amountPaid, paymentMethod)
-VALUEs('PT001', 'SE001', '2025-09-01', '1716.67', 'CASH'),
-	  ('PT002', 'SE002', '2025-10-01', '1716.67', 'CASH'),
-      ('PT003', 'SE003', '2025-11-01', '1716.67', 'CASH');
+VALUEs('PT001', 'SE001', '2025-09-01', '', 'CASH'),
+	  ('PT002', 'SE002', '2025-10-01', '', 'CASH'),
+      ('PT003', 'SE003', '2025-11-01', '', 'CASH');
 
 -- FOR BEA ANGELA BALUCAN (payment)
 INSERT INTO PAYMENT(paymentID, scheduleID, paymentDate, amountPaid, paymentMethod)
-VALUES('PT004', 'SE004', '2025-11-01', '3573.33', 'CASH'),
-      ('PT005', 'SE005', '2025-12-08', '3644.80', 'BPI-BANK'),
-      ('PT006', 'SE006', '2026-01-16', '3752.00', 'BPI-BANK'),
+VALUES('PT004', 'SE004', '2025-11-01', '', 'CASH'),
+      ('PT005', 'SE005', '2025-12-08', '', 'BPI-BANK'),
+      ('PT006', 'SE006', '2026-01-16', '', 'BPI-BANK'),
     
 
 INSERT INTO PENALTY (penaltyID, paymentID, penaltyFee)
