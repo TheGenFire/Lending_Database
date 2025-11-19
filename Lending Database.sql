@@ -175,6 +175,13 @@ BEGIN
     RETURN monthly;
 END;
 
+CREATE PROCEDURE fill_amountDue()
+BEGIN
+    UPDATE payment_schedule s
+    SET s.amountDue = compute_amount_due(s.loanID)
+    WHERE s.amountDue IS NULL;
+END;
+
      
 
 SELECT borrowerID "BORROWER ID", firstName "FIRST NAME", lastName "LAST NAME", phone "PHONE NUMBER", address "ADDRESS" FROM BORROWER;
