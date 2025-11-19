@@ -63,36 +63,6 @@ CREATE TABLE PAYMENT_SCHEDULE
      FOREIGN KEY (loanID) REFERENCES APPROVED_LOAN (loanID)
      ON DELETE CASCADE ON UPDATE CASCADE
     );
-
-DELIMITER $$
-
-CREATE TRIGGER trg_calc_amountDue
-BEFORE INSERT ON PAYMENT_SCHEDULE
-FOR EACH ROW
-BEGIN
-    DECLARE termMonths INT;
-    DECLARE loanAmount DECIMAL(10,2);
-    DECLARE rate DECIMAL(5,3);
-
-    -- Get loan data from APPROVED_LOAN
-    SELECT 
-        amount, 
-        interestRate,
-        SUBSTRING(paymentTerm, 1, 2)  -- "3 MONTHS" → 3
-    INTO 
-        loanAmount,
-        rate,
-        termMonths
-    FROM APPROVED_LOAN
-    WHERE loanID = NEW.loanID;
-
-    -- Compute monthly due
-    SET NEW.amountDue = (loanAmount * (1 + rate)) / termMonths;
-
-END$$
-
-DELIMITER ;
-
     
 CREATE TABLE PAYMENT
 	(paymentID CHAR(5) PRIMARY KEY,
@@ -104,24 +74,6 @@ CREATE TABLE PAYMENT
      ON DELETE CASCADE ON UPDATE CASCADE
     );
 
-DELIMITER $$
-
-CREATE TRIGGER trg_fill_amountPaid
-BEFORE INSERT ON PAYMENT
-FOR EACH ROW
-BEGIN
-    DECLARE dueAmount DECIMAL(10,2);
-
-    SELECT amountDue 
-    INTO dueAmount
-    FROM PAYMENT_SCHEDULE
-    WHERE scheduleID = NEW.scheduleID;
-
-    SET NEW.amountPaid = dueAmount;
-END$$
-
-DELIMITER ;
-
  CREATE TABLE PENALTY
 	(penaltyID CHAR(5) PRIMARY KEY,
      paymentID CHAR(5),
@@ -129,49 +81,6 @@ DELIMITER ;
      FOREIGN KEY (paymentID) REFERENCES PAYMENT (paymentID)
      ON DELETE CASCADE ON UPDATE CASCADE
     );
-
-DELIMITER $$
-
-CREATE TRIGGER trg_calc_penaltyFee
-BEFORE INSERT ON PENALTY
-FOR EACH ROW
-BEGIN
-    DECLARE due DATE;
-    DECLARE pay DATE;
-    DECLARE daysLate INT;
-    DECLARE rate DECIMAL(5,2);
-    DECLARE amountDue DECIMAL(10,2);
-
-    -- Get dueDate and paymentDate
-    SELECT PS.dueDate, P.paymentDate, PS.amountDue
-    INTO due, pay, amountDue
-    FROM PAYMENT P
-    JOIN PAYMENT_SCHEDULE PS ON P.scheduleID = PS.scheduleID
-    WHERE P.paymentID = NEW.paymentID;
-
-    -- Compute late days
-    SET daysLate = DATEDIFF(pay, due);
-
-    IF daysLate < 1 THEN
-        SET NEW.penaltyFee = 0;
-    ELSE
-        -- Get proper rate from penalty_rate table
-        SELECT rate 
-        INTO rate
-        FROM PENALTY_RATE
-        WHERE daysLate BETWEEN 
-            CAST(SUBSTRING_INDEX(numOfDays, '-', 1) AS UNSIGNED)
-            AND
-            CAST(SUBSTRING_INDEX(numOfDays, '-', -1) AS UNSIGNED)
-        LIMIT 1;
-
-        SET NEW.penaltyFee = amountDue * rate;
-    END IF;
-
-END$$
-
-DELIMITER ;
-
 
 CREATE TABLE PENALTY_RATE
 	(penaltyRateID CHAR(5) PRIMARY KEY,
@@ -230,11 +139,11 @@ VALUEs('PT001', 'SE001', '2025-09-01', 'CASH'),
 INSERT INTO PAYMENT(paymentID, scheduleID, paymentDate, paymentMethod)
 VALUES('PT004', 'SE004', '2025-11-01', 'CASH'),
       ('PT005', 'SE005', '2025-12-08', 'BPI-BANK'),
-      ('PT006', 'SE006', '2026-01-16', 'BPI-BANK'),
+      ('PT006', 'SE006', '2026-01-16', 'BPI-BANK');
     
 
 INSERT INTO PENALTY (penaltyID, paymentID)
-VALUES('PY001', 'PT005')
+VALUES('PY001', 'PT005'),
       ('PY002', 'PT006');
 	
 
