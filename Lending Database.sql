@@ -182,6 +182,8 @@ BEGIN
     WHERE s.amountDue IS NULL;
 END;
 
+CALL fill_amount_due();
+
      
 
 SELECT borrowerID "BORROWER ID", firstName "FIRST NAME", lastName "LAST NAME", phone "PHONE NUMBER", address "ADDRESS" FROM BORROWER;
