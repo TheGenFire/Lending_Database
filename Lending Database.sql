@@ -59,7 +59,7 @@ CREATE TABLE PAYMENT_SCHEDULE
 	(scheduleID CHAR(5) PRIMARY KEY,
      loanID CHAR(5),
      dueDate DATE NOT NULL,
-     amountDue DECIMAL(10,2) NULL,
+     amountDue DECIMAL(10,2),
      FOREIGN KEY (loanID) REFERENCES APPROVED_LOAN (loanID)
      ON DELETE CASCADE ON UPDATE CASCADE
     );
@@ -68,7 +68,7 @@ CREATE TABLE PAYMENT
 	(paymentID CHAR(5) PRIMARY KEY,
      scheduleID CHAR(5),
      paymentDate DATE NOT NULL,
-     amountPaid DECIMAL(10,2) NULL,
+     amountPaid DECIMAL(10,2),
      paymentMethod VARCHAR(10) NOT NULL,
      FOREIGN KEY (scheduleID) REFERENCES PAYMENT_SCHEDULE (scheduleID)
      ON DELETE CASCADE ON UPDATE CASCADE
@@ -77,7 +77,7 @@ CREATE TABLE PAYMENT
  CREATE TABLE PENALTY
 	(penaltyID CHAR(5) PRIMARY KEY,
      paymentID CHAR(5),
-     penaltyFee DECIMAL(10,2) NULL,
+     penaltyFee DECIMAL(10,2),
      FOREIGN KEY (paymentID) REFERENCES PAYMENT (paymentID)
      ON DELETE CASCADE ON UPDATE CASCADE
     );
