@@ -115,42 +115,66 @@ VALUES('BH001', 'COLON BRANCH', '09623657688', 'COLON CEBU CITY CEBU'),
 	  ('BH003', 'CARCAR BRANCH', '09712657691', 'CARCAR CITY CEBU');
       
    -- FOR NEOKENT DURANO(schedule)
-INSERT INTO PAYMENT_SCHEDULE(scheduleID, loanID, dueDate)
-VALUES('SE001', 'LN001', '2025-09-01'),
-      ('SE002', 'LN001', '2025-10-01'),
-      ('SE003', 'LN001', '2025-11-01');
+INSERT INTO PAYMENT_SCHEDULE(scheduleID, loanID, dueDate, amountDue)
+VALUES('SE001', 'LN001', '2025-09-01', NULL),
+      ('SE002', 'LN001', '2025-10-01', NULL),
+      ('SE003', 'LN001', '2025-11-01', NULL);
 
    -- FOR BEA ANGELA BALUCAN(schedule)
-INSERT INTO PAYMENT_SCHEDULE(scheduleID, loanID, dueDate)
-VALUES('SE004', 'LN003', '2025-11-01'),
-	  ('SE005', 'LN003', '2025-12-01'),
-      ('SE006', 'LN003', '2026-01-01'),
-      ('SE007', 'LN003', '2026-02-01'),
-      ('SE008', 'LN003', '2026-03-01'),
-      ('SE009', 'LN003', '2026-04-01');
+INSERT INTO PAYMENT_SCHEDULE(scheduleID, loanID, dueDate, amountDue)
+VALUES('SE004', 'LN003', '2025-11-01', NULL),
+	  ('SE005', 'LN003', '2025-12-01', NULL),
+      ('SE006', 'LN003', '2026-01-01', NULL),
+      ('SE007', 'LN003', '2026-02-01', NULL),
+      ('SE008', 'LN003', '2026-03-01', NULL),
+      ('SE009', 'LN003', '2026-04-01', NULL);
       
       -- NEO KENT DURANO (payment)
-INSERT INTO PAYMENT(paymentID, scheduleID, paymentDate, paymentMethod)
-VALUEs('PT001', 'SE001', '2025-09-01', 'CASH'),
-	  ('PT002', 'SE002', '2025-10-01', 'CASH'),
-      ('PT003', 'SE003', '2025-11-01', 'CASH');
+INSERT INTO PAYMENT(paymentID, scheduleID, paymentDate, amountPaid, paymentMethod)
+VALUEs('PT001', 'SE001', '2025-09-01', NULL,'CASH'),
+	  ('PT002', 'SE002', '2025-10-01', NULL,'CASH'),
+      ('PT003', 'SE003', '2025-11-01', NULL,'CASH');
 
 -- FOR BEA ANGELA BALUCAN (payment)
-INSERT INTO PAYMENT(paymentID, scheduleID, paymentDate, paymentMethod)
-VALUES('PT004', 'SE004', '2025-11-01', 'CASH'),
-      ('PT005', 'SE005', '2025-12-08', 'BPI-BANK'),
-      ('PT006', 'SE006', '2026-01-16', 'BPI-BANK');
+INSERT INTO PAYMENT(paymentID, scheduleID, paymentDate, amountPaid, paymentMethod)
+VALUES('PT004', 'SE004', '2025-11-01', NULL,'CASH'),
+      ('PT005', 'SE005', '2025-12-08', NULL,'BPI-BANK'),
+      ('PT006', 'SE006', '2026-01-16', NULL,'BPI-BANK');
     
 
-INSERT INTO PENALTY (penaltyID, paymentID)
-VALUES('PY001', 'PT005'),
-      ('PY002', 'PT006');
+INSERT INTO PENALTY (penaltyID, paymentID, penaltyFee)
+VALUES('PY001', 'PT005', NULL),
+      ('PY002', 'PT006', NULL);
 	
 
 INSERT INTO PENALTY_RATE (penaltyRateID, numOfDays, rate)
 VALUES('PR001', '1-14', 0.02),   -- 2% penalty for payments 1–14 days late
 	  ('PR002', '15-21', 0.05),   -- 5% penalty for 15-21 days late
       ('PR003', '21 above', 0.10),  -- 10% penalty for more than 21 days late
+
+CREATE FUNCTION compute_amountDue(p_loanID CHAR(5))
+RETURNS DECIMAL(10,2)
+BEGIN
+    DECLARE total DECIMAL(10,2);
+    DECLARE months INT;
+    DECLARE monthly DECIMAL(10,2);
+
+    SELECT amount INTO total FROM approved_loan WHERE loanID = p_loanID;
+
+    SELECT 
+        CASE 
+            WHEN paymentTerm = '3 MONTHS' THEN 3
+            WHEN paymentTerm = '6 MONTHS' THEN 6
+        END
+    INTO months
+    FROM approved_loan
+    WHERE loanID = p_loanID;
+
+    SET monthly = total / months;
+
+    RETURN monthly;
+END;
+
      
 
 SELECT borrowerID "BORROWER ID", firstName "FIRST NAME", lastName "LAST NAME", phone "PHONE NUMBER", address "ADDRESS" FROM BORROWER;
