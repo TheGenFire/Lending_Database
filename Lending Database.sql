@@ -88,6 +88,13 @@ CREATE TABLE PENALTY_RATE
      rate DECIMAL (5,2) NOT NULL
     );
     
+CREATE TABLE LOAN_TERM(
+    termID CHAR(5) PRIMARY KEY,
+    paymentTerm VARCHAR(20) NOT NULL,       
+    termRate DECIMAL(5,3) NOT NULL,     
+    loanRange VARCHAR(20) NOT NULL
+);
+    
 INSERT INTO BORROWER (borrowerID, firstName, lastName, phone, address)
 VALUES ('BR001','NEOKENT', 'DURANO', '09123456789', 'DANAO CITY'),
 	   ('BR002','KIER', 'BORNE', '09558559293', 'CEBU CITY'),	
@@ -148,11 +155,16 @@ VALUES('PY001', 'PT005', NULL),
 	
 
 INSERT INTO PENALTY_RATE (penaltyRateID, numOfDays, rate)
-VALUES('PR001', '1-14', 0.02),   -- 2% penalty for payments 1–14 days late
-	  ('PR002', '15-21', 0.05),   -- 5% penalty for 15-21 days late
-      ('PR003', '21 above', 0.10);  -- 10% penalty for more than 21 days late
+VALUES('PR001', '1-14', 0.02),   
+	  ('PR002', '15-21', 0.05),   
+      ('PR003', '21 above', 0.10);  
+
+INSERT INTO LOAN_TERM (termID, paymentTerm, termRate, loanRange)
+VALUES 
+('TM001', '3 MONTHS', 0.010, '5000 – 10000'),
+('TM002', '6 MONTHS', 0.012, '11000 – 30000'),
+('TM003', '12 MONTHS', 0.015, 'more than 30000');
  
--- Added stored function and procedure for amountDue in PAYMENT_Schedule Table
 DELIMITER $$
 
 CREATE FUNCTION compute_amountDue(p_loanID CHAR(5))
@@ -165,12 +177,10 @@ BEGIN
     DECLARE interestRate DECIMAL(5,4);
     DECLARE monthly DECIMAL(10,2);
 
-    -- Get loan amount
     SELECT amount INTO principal
     FROM approved_loan 
     WHERE loanID = p_loanID;
 
-    -- Determine payment term in months
     SELECT 
         CASE 
             WHEN paymentTerm = '3 MONTHS' THEN 3
@@ -182,7 +192,6 @@ BEGIN
     FROM approved_loan
     WHERE loanID = p_loanID;
 
-    -- Determine interest rate based on loan amount and term
     IF months = 3 AND principal BETWEEN 5000 AND 10000 THEN
         SET interestRate = 0.01;  -- 1%
     ELSEIF months = 6 AND principal BETWEEN 11000 AND 30000 THEN
@@ -193,7 +202,6 @@ BEGIN
         SET interestRate = 0; -- default if no match
     END IF;
 
-    -- Compute monthly payment including interest
     SET monthly = (principal + (principal * interestRate)) / months;
 
     RETURN monthly;
@@ -211,12 +219,6 @@ BEGIN
 END$$;
 
 DELIMITER ;
-
-UPDATE payment_schedule
-SET amountDue = NULL;
-
-
-CALL fill_amountDue();
 
 -- Added stored function and procedure for penaltyFee in Penalty Table
 
@@ -267,18 +269,38 @@ END$$;
 
 DELIMITER ;
 
+CALL fill_amountDue();
 CALL fill_penaltyFee();
      
-
+-- BORROWER
 SELECT borrowerID "BORROWER ID", firstName "FIRST NAME", lastName "LAST NAME", phone "PHONE NUMBER", address "ADDRESS" FROM BORROWER;
+
+-- LOAN_APPLICATION
 SELECT loanID "LOAN ID", amount "AMOUNT", status "STATUS", borrowerID "BORROWER ID", staffID "STAFF ID" FROM LOAN_APPLICATION;
+
+-- APPROVED_LOAN
 SELECT loanID "LOAN ID", staffID "STAFF ID", amount "AMOUNT", paymentTerm "PAYMENT TERM", interestRate "INTEREST RATE", startDate "START DATE", maturityDate "MATURITY DATE", status "STATUS" FROM APPROVED_LOAN;
+
+-- BRANCH
 SELECT branchID "BRANCH ID", branchName "BRANCH NAME", phone "CONTACT NUMBER", address "ADDRESS" FROM BRANCH;
+
+-- STAFF
 SELECT staffID "STAFF ID", branchID "BRANCH ID", firstName "FIRST NAME", lastName "LAST NAME", phone "PHONE", position "POSITION" FROM STAFF;
+
+-- PAYMENT_SCHEDULE
 SELECT scheduleID "SCHEDULE ID", loanID "LOAN ID", dueDate "DUE DATE", amountDue "AMOUNT DUE" FROM PAYMENT_SCHEDULE;
+
+-- PAYMENT
 SELECT paymentID "PAYMENT ID", scheduleID "SCHEDULE ID", paymentDate "PAYMENT DATE", amountPaid "AMOUNT", paymentMethod "PAYMENT METHOD" FROM PAYMENT;
+
+-- PENALTY
 SELECT penaltyID "PENALTY ID", paymentID "PAYMENT ID", penaltyFee "PENALTY FEE" FROM PENALTY;
+
+-- PENALTY_RATE
 SELECT penaltyRateID "PENALTY RATE ID", numOfDays "NUMBER OF LATE DAYS", rate "PENALTY RATE" FROM PENALTY_RATE;
+
+-- LOAN_TERM
+SELECT termID "TERM ID", paymentTerm "PAYMENT TERM", termRate "INTEREST RATE", loanRange "LOAN RANGE" FROM LOAN_TERM;
 
 
 
