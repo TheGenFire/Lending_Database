@@ -164,7 +164,9 @@ VALUES
 ('TM001', '3 MONTHS', 0.010, '5000 – 10000'),
 ('TM002', '6 MONTHS', 0.012, '11000 – 30000'),
 ('TM003', '12 MONTHS', 0.015, 'more than 30000');
- 
+
+-- STORED FUNCTION AND PROCEDURE FOR AMOUNTDUE IN PAYMENT_SCHEDULE TABLE
+
 DELIMITER $$
 
 CREATE FUNCTION compute_amountDue(p_loanID CHAR(5))
@@ -193,13 +195,13 @@ BEGIN
     WHERE loanID = p_loanID;
 
     IF months = 3 AND principal BETWEEN 5000 AND 10000 THEN
-        SET interestRate = 0.01;  -- 1%
+        SET interestRate = 0.01;  
     ELSEIF months = 6 AND principal BETWEEN 11000 AND 30000 THEN
-        SET interestRate = 0.012; -- 1.2%
+        SET interestRate = 0.012;
     ELSEIF months = 12 AND principal > 30000 THEN
-        SET interestRate = 0.015; -- 1.5%
+        SET interestRate = 0.015;
     ELSE
-        SET interestRate = 0; -- default if no match
+        SET interestRate = 0; 
     END IF;
 
     SET monthly = (principal + (principal * interestRate)) / months;
@@ -220,7 +222,7 @@ END$$;
 
 DELIMITER ;
 
--- Added stored function and procedure for penaltyFee in Penalty Table
+-- STORED FUNCTION AND PROCEDURE FOR PENALTYFEE IN PENALTY TABLE
 
 DELIMITER $$
 
