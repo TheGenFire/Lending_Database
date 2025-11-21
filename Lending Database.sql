@@ -215,10 +215,10 @@ DELIMITER ;
 DELIMITER $$
 CREATE PROCEDURE fill_amountDue()
 BEGIN
-    UPDATE payment_schedule s
+    UPDATE payment_schedule s 
     SET s.amountDue = compute_amountDue(s.loanID)
     WHERE s.amountDue IS NULL;
-END$$;
+END$$;fill_amountDue
 
 DELIMITER ;
 
@@ -271,9 +271,14 @@ END$$;
 
 DELIMITER ;
 
+SET SQL_SAFE_UPDATES = 0;
 CALL fill_amountDue();
+SET SQL_SAFE_UPDATES = 1;
+
+SET SQL_SAFE_UPDATES = 0;
 CALL fill_penaltyFee();
-     
+SET SQL_SAFE_UPDATES = 1;
+  
 -- BORROWER
 SELECT borrowerID "BORROWER ID", firstName "FIRST NAME", lastName "LAST NAME", phone "PHONE NUMBER", address "ADDRESS" FROM BORROWER;
 
@@ -303,6 +308,9 @@ SELECT penaltyRateID "PENALTY RATE ID", numOfDays "NUMBER OF LATE DAYS", rate "P
 
 -- LOAN_TERM
 SELECT termID "TERM ID", paymentTerm "PAYMENT TERM", termRate "INTEREST RATE", loanRange "LOAN RANGE" FROM LOAN_TERM;
+
+
+select b.branchID, s.staffID from branch b left join staff s on b.branchID = s.branchID;
 
 
 
