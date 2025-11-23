@@ -278,6 +278,25 @@ SET SQL_SAFE_UPDATES = 1;
 SET SQL_SAFE_UPDATES = 0;
 CALL fill_penaltyFee();
 SET SQL_SAFE_UPDATES = 1;
+
+
+ALTER TABLE approved_loan
+MODIFY interestRate DECIMAL (5,3);
+
+UPDATE approved_loan
+SET interestRate = NULL;
+
+-- UPDATE STATEMENT FOR COLUMN INTERESTRATE IN APPROVED_LOAN TABLE
+
+UPDATE APPROVED_LOAN
+SET interestRate = 
+    CASE 
+        WHEN paymentTerm = '3 MONTHS' THEN 0.01
+        WHEN paymentTerm = '6 MONTHS' THEN 0.012
+        WHEN paymentTerm = '12 MONTHS' THEN 0.015
+        ELSE 0
+    END
+WHERE interestRate IS NULL;
   
 -- BORROWER
 SELECT borrowerID "BORROWER ID", firstName "FIRST NAME", lastName "LAST NAME", phone "PHONE NUMBER", address "ADDRESS" FROM BORROWER;
@@ -309,8 +328,9 @@ SELECT penaltyRateID "PENALTY RATE ID", numOfDays "NUMBER OF LATE DAYS", rate "P
 -- LOAN_TERM
 SELECT termID "TERM ID", paymentTerm "PAYMENT TERM", termRate "INTEREST RATE", loanRange "LOAN RANGE" FROM LOAN_TERM;
 
-
 select b.branchID, s.staffID from branch b left join staff s on b.branchID = s.branchID;
+
+
 
 
 
