@@ -297,6 +297,17 @@ SET interestRate =
         ELSE 0
     END
 WHERE interestRate IS NULL;
+
+-- UPDATE STATEMENT FOR COLUMN amountPaid IN PAYMENT TABLE
+
+UPDATE PAYMENT p
+JOIN PAYMENT_SCHEDULE s ON p.scheduleID = s.scheduleID
+SET p.amountPaid =
+    CASE
+        WHEN p.paymentDate <= s.dueDate
+            THEN s.amountDue
+        ELSE s.amountDue + compute_penalty(p.paymentID)
+    END;
   
 -- BORROWER
 SELECT borrowerID "BORROWER ID", firstName "FIRST NAME", lastName "LAST NAME", phone "PHONE NUMBER", address "ADDRESS" FROM BORROWER;
