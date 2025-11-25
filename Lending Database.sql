@@ -330,12 +330,23 @@ SELECT termID "TERM ID", paymentTerm "PAYMENT TERM", termRate "INTEREST RATE", l
 
 select b.branchID, s.staffID from branch b left join staff s on b.branchID = s.branchID;
 
--- To see late payments
-SELECT s.dueDate, p.paymentDate, s.amountDue, DATEDIFF(paymentDate, dueDate) "Days Late"
+-- To see late payments and its penalty
+CREATE VIEW paymentWithPenalty AS
+SELECT 
+	p.paymentID, 
+	s.scheduleID, 
+    s.dueDate, 
+    p.paymentDate, 
+    DATEDIFF(paymentDate, dueDate) "Days Late",
+    s.amountDue,
+    compute_penalty(p.paymentID) "PENALTY",
+    s.amountDue + compute_penalty(p.paymentID) "newAmountDue"
 FROM payment p
 JOIN payment_schedule s 
-ON p.scheduleID = s.scheduleID;
+ON p.scheduleID = s.scheduleID
+WHERE DATEDIFF(paymentDate, dueDate) > 0;
 
+SELECT * FROM paymentWithPenalty;
 
 
 
